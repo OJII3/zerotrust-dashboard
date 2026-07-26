@@ -1,0 +1,1005 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zero Trust Machines</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --panel-2: #eef2f5;
+        --text: #17202a;
+        --muted: #5f6b77;
+        --line: #d8dee6;
+        --accent: #176b87;
+        --accent-2: #2d8a66;
+        --warn: #b7791f;
+        --danger: #b42318;
+        --shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #101316;
+          --panel: #171b20;
+          --panel-2: #20262d;
+          --text: #ecf1f5;
+          --muted: #9aa7b2;
+          --line: #303842;
+          --accent: #5bbad1;
+          --accent-2: #70c49a;
+          --warn: #e0ac4f;
+          --danger: #f3766c;
+          --shadow: 0 18px 36px rgba(0, 0, 0, 0.34);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 14px;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: var(--accent);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .app {
+        min-width: 1024px;
+        padding: 24px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 680;
+      }
+
+      .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .refresh {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 12px;
+      }
+
+      .spin {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--line);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: rotate 800ms linear infinite;
+      }
+
+      @keyframes rotate {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 14px 16px;
+      }
+
+      .metric .label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .metric .value {
+        margin-top: 6px;
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: minmax(300px, 1fr) 160px 160px 190px 170px;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .search,
+      select {
+        width: 100%;
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--text);
+        padding: 0 12px;
+      }
+
+      .notice {
+        display: none;
+        margin-bottom: 12px;
+        border: 1px solid var(--warn);
+        border-radius: 8px;
+        padding: 12px 14px;
+        background: color-mix(in srgb, var(--warn) 12%, transparent);
+        color: var(--text);
+      }
+
+      .notice.show {
+        display: block;
+      }
+
+      .table-wrap {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--panel);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 12px 14px;
+        vertical-align: top;
+      }
+
+      th {
+        background: var(--panel-2);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+        text-align: left;
+      }
+
+      tbody tr {
+        cursor: pointer;
+      }
+
+      tbody tr:hover {
+        background: color-mix(in srgb, var(--accent) 7%, transparent);
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .status-cell {
+        width: 152px;
+      }
+
+      .machine-cell {
+        width: 30%;
+      }
+
+      .address-cell {
+        width: 26%;
+      }
+
+      .version-cell {
+        width: 18%;
+      }
+
+      .last-seen-cell {
+        width: 18%;
+      }
+
+      .machine-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        font-weight: 680;
+      }
+
+      .truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .subtle {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 8px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0 8px;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border: 2px solid currentColor;
+        border-radius: 50%;
+        color: var(--muted);
+        flex: 0 0 auto;
+      }
+
+      .status-connected,
+      .status-recently_seen {
+        color: var(--accent-2);
+      }
+
+      .status-stale {
+        color: var(--warn);
+      }
+
+      .status-revoked {
+        color: var(--danger);
+      }
+
+      .status-label {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .addr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 32px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .addr code {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .copy-btn,
+      .icon-btn {
+        width: 32px;
+        min-height: 30px;
+        padding: 0;
+        display: inline-grid;
+        place-items: center;
+      }
+
+      .empty {
+        padding: 42px 16px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        background: rgba(0, 0, 0, 0.36);
+      }
+
+      .drawer-backdrop.show {
+        display: block;
+      }
+
+      .drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(720px, 72vw);
+        height: 100vh;
+        overflow-y: auto;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        padding: 22px;
+      }
+
+      .drawer-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .drawer h2 {
+        margin: 0;
+        font-size: 22px;
+      }
+
+      .section {
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+        margin-top: 16px;
+      }
+
+      .section h3 {
+        margin: 0 0 10px;
+        font-size: 14px;
+      }
+
+      .kv {
+        display: grid;
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 8px 14px;
+      }
+
+      .kv dt {
+        color: var(--muted);
+      }
+
+      .kv dd {
+        margin: 0;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .registration {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 10px;
+      }
+
+      .registration-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+        font-weight: 650;
+      }
+
+      @media (max-width: 1023px) {
+        .app {
+          min-width: 0;
+          padding: 14px;
+        }
+
+        header,
+        .header-meta {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .summary {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .toolbar {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .table-wrap {
+          overflow-x: auto;
+        }
+
+        table {
+          min-width: 980px;
+        }
+
+        .drawer {
+          width: 100vw;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <div>
+          <h1>Zero Trust Machines</h1>
+          <div class="subtle"><span id="deviceCount">0</span> devices</div>
+        </div>
+        <div class="header-meta">
+          <span id="viewer">Signed in: Unknown</span>
+          <span id="updated">Updated —</span>
+          <span id="autoRefresh">Auto refresh: on</span>
+          <button id="refresh" class="refresh" type="button" aria-label="Refresh devices">
+            <span id="refreshIcon">↻</span>
+            <span>Refresh</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="summary" aria-label="Device summary">
+        <div class="metric">
+          <div class="label">Devices</div>
+          <div class="value" id="summaryDevices">0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Active registrations</div>
+          <div class="value" id="summaryActive">0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Recently seen</div>
+          <div class="value" id="summaryRecent">0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Stale devices</div>
+          <div class="value" id="summaryStale">0</div>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="Filters">
+        <input id="search" class="search" type="search" placeholder="Search hostname, user or IP..." />
+        <select id="osFilter" aria-label="Operating system filter"></select>
+        <select id="statusFilter" aria-label="Status filter"></select>
+        <select id="profileFilter" aria-label="Profile filter"></select>
+        <select id="sortSelect" aria-label="Sort devices">
+          <option value="default">Default order</option>
+          <option value="name">Machine name</option>
+          <option value="lastSeen">Last seen</option>
+          <option value="created">Created</option>
+          <option value="clientVersion">Client version</option>
+          <option value="email">User email</option>
+          <option value="activeRegistrations">Active registrations</option>
+        </select>
+      </section>
+
+      <div id="notice" class="notice" role="status"></div>
+
+      <section class="table-wrap" aria-label="Machines">
+        <table>
+          <thead>
+            <tr>
+              <th class="status-cell">Status</th>
+              <th class="machine-cell">Machine</th>
+              <th class="address-cell">Addresses</th>
+              <th class="version-cell">Version</th>
+              <th class="last-seen-cell">Last Seen</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div id="empty" class="empty" hidden>No devices match the current filters.</div>
+      </section>
+    </main>
+
+    <div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true">
+      <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+        <div class="drawer-head">
+          <div>
+            <h2 id="drawerTitle"></h2>
+            <div id="drawerSubtitle" class="subtle"></div>
+          </div>
+          <button id="drawerClose" class="icon-btn" type="button" aria-label="Close details">×</button>
+        </div>
+        <div id="drawerContent"></div>
+      </aside>
+    </div>
+
+    <script>
+      const state = {
+        devices: [],
+        summary: null,
+        meta: null,
+        viewer: null,
+        loading: false,
+        autoRefreshId: null
+      };
+
+      const els = {
+        rows: document.getElementById("rows"),
+        empty: document.getElementById("empty"),
+        search: document.getElementById("search"),
+        osFilter: document.getElementById("osFilter"),
+        statusFilter: document.getElementById("statusFilter"),
+        profileFilter: document.getElementById("profileFilter"),
+        sortSelect: document.getElementById("sortSelect"),
+        refresh: document.getElementById("refresh"),
+        refreshIcon: document.getElementById("refreshIcon"),
+        notice: document.getElementById("notice"),
+        drawerBackdrop: document.getElementById("drawerBackdrop"),
+        drawerClose: document.getElementById("drawerClose"),
+        drawerTitle: document.getElementById("drawerTitle"),
+        drawerSubtitle: document.getElementById("drawerSubtitle"),
+        drawerContent: document.getElementById("drawerContent")
+      };
+
+      const statusLabels = {
+        connected: "Connected",
+        recently_seen: "Recently seen",
+        offline: "Offline",
+        stale: "Stale",
+        revoked: "Revoked",
+        unknown: "Unknown"
+      };
+
+      const statusRank = {
+        connected: 0,
+        recently_seen: 1,
+        offline: 2,
+        stale: 3,
+        revoked: 4,
+        unknown: 5
+      };
+
+      els.refresh.addEventListener("click", () => loadDevices(true));
+      els.search.addEventListener("input", render);
+      els.osFilter.addEventListener("change", render);
+      els.statusFilter.addEventListener("change", render);
+      els.profileFilter.addEventListener("change", render);
+      els.sortSelect.addEventListener("change", render);
+      els.drawerClose.addEventListener("click", closeDrawer);
+      els.drawerBackdrop.addEventListener("click", (event) => {
+        if (event.target === els.drawerBackdrop) closeDrawer();
+      });
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeDrawer();
+      });
+
+      loadDevices(false);
+
+      async function loadDevices(manual) {
+        if (state.loading) return;
+        state.loading = true;
+        els.refresh.disabled = true;
+        els.refreshIcon.innerHTML = '<span class="spin" aria-hidden="true"></span>';
+
+        try {
+          const response = await fetch(`/api/devices${manual ? "?refresh=1" : ""}`, {
+            headers: { Accept: "application/json" }
+          });
+          const body = await response.json();
+          if (!response.ok) throw new Error(body.error || "Failed to load devices");
+
+          state.devices = body.devices || [];
+          state.summary = body.summary;
+          state.meta = body.meta;
+          state.viewer = body.viewer;
+          populateFilters();
+          render();
+          scheduleAutoRefresh();
+        } catch (error) {
+          showNotice(error.message || "Cloudflare APIから最新情報を取得できませんでした。");
+        } finally {
+          state.loading = false;
+          els.refresh.disabled = false;
+          els.refreshIcon.textContent = "↻";
+        }
+      }
+
+      function scheduleAutoRefresh() {
+        if (state.autoRefreshId) clearInterval(state.autoRefreshId);
+        const seconds = Math.max(Number(state.meta?.refreshIntervalSeconds || 60), 15);
+        document.getElementById("autoRefresh").textContent = `Auto refresh: ${seconds}s`;
+        state.autoRefreshId = setInterval(() => loadDevices(false), seconds * 1000);
+      }
+
+      function populateFilters() {
+        const current = {
+          os: els.osFilter.value,
+          status: els.statusFilter.value,
+          profile: els.profileFilter.value
+        };
+        const osValues = unique(state.devices.map((device) => osName(device.deviceType || device.osVersion)));
+        const profiles = unique(state.devices.map((device) => profileName(device.profile)).filter(Boolean));
+
+        setOptions(els.osFilter, "OS: All", osValues, current.os);
+        setOptions(els.statusFilter, "Status: All", Object.values(statusLabels), current.status);
+        setOptions(els.profileFilter, "Profile: All", profiles, current.profile);
+      }
+
+      function setOptions(select, allLabel, values, selected) {
+        select.innerHTML = "";
+        select.append(new Option(allLabel, ""));
+        values.sort((a, b) => a.localeCompare(b)).forEach((value) => select.append(new Option(value, value)));
+        if ([...select.options].some((option) => option.value === selected)) select.value = selected;
+      }
+
+      function render() {
+        const devices = filteredDevices();
+        updateHeader(devices.length);
+        els.rows.innerHTML = "";
+
+        for (const device of devices) {
+          const row = document.createElement("tr");
+          row.tabIndex = 0;
+          row.addEventListener("click", () => openDrawer(device));
+          row.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") openDrawer(device);
+          });
+          row.innerHTML = `
+            <td>${statusHtml(device)}</td>
+            <td>${machineHtml(device)}</td>
+            <td>${addressesHtml(device)}</td>
+            <td>${versionHtml(device)}</td>
+            <td>${lastSeenHtml(device)}</td>
+          `;
+          row.querySelectorAll("[data-copy]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+              event.stopPropagation();
+              copyText(button.dataset.copy, button);
+            });
+          });
+          els.rows.append(row);
+        }
+
+        els.empty.hidden = devices.length !== 0;
+      }
+
+      function filteredDevices() {
+        const query = els.search.value.trim().toLowerCase();
+        const os = els.osFilter.value;
+        const status = els.statusFilter.value;
+        const profile = els.profileFilter.value;
+
+        const filtered = state.devices.filter((device) => {
+          if (query && !searchBlob(device).includes(query)) return false;
+          if (os && osName(device.deviceType || device.osVersion) !== os) return false;
+          if (status && statusLabels[device.status] !== status) return false;
+          if (profile && profileName(device.profile) !== profile) return false;
+          return true;
+        });
+
+        return sortDevices(filtered);
+      }
+
+      function sortDevices(devices) {
+        const mode = els.sortSelect.value;
+        return [...devices].sort((a, b) => {
+          if (mode === "name") return safe(a.name).localeCompare(safe(b.name));
+          if (mode === "lastSeen") return dateValue(b.lastSeenAt) - dateValue(a.lastSeenAt);
+          if (mode === "created") return dateValue(b.createdAt) - dateValue(a.createdAt);
+          if (mode === "clientVersion") return safe(a.clientVersion).localeCompare(safe(b.clientVersion), undefined, { numeric: true });
+          if (mode === "email") return safe(firstEmail(a)).localeCompare(safe(firstEmail(b)));
+          if (mode === "activeRegistrations") return activeCount(b) - activeCount(a);
+          return statusRank[a.status] - statusRank[b.status] || safe(a.name).localeCompare(safe(b.name));
+        });
+      }
+
+      function updateHeader(count) {
+        document.getElementById("deviceCount").textContent = count;
+        document.getElementById("summaryDevices").textContent = state.summary?.devices ?? 0;
+        document.getElementById("summaryActive").textContent = state.summary?.activeRegistrations ?? 0;
+        document.getElementById("summaryRecent").textContent = state.summary?.recentlySeen ?? 0;
+        document.getElementById("summaryStale").textContent = state.summary?.staleDevices ?? 0;
+        document.getElementById("updated").textContent = state.meta?.fetchedAt
+          ? `Updated ${formatAbsolute(state.meta.fetchedAt)}`
+          : "Updated —";
+        document.getElementById("viewer").textContent = `Signed in: ${state.viewer?.email || state.viewer?.name || "Unknown"}`;
+
+        const failures = state.meta?.partialFailures || [];
+        if (state.meta?.cache === "stale") {
+          showNotice(`Cloudflare APIから最新情報を取得できませんでした。${formatAbsolute(state.meta.fetchedAt)} 時点のデータを表示しています。`);
+        } else if (failures.length) {
+          showNotice(`一部のAPI取得に失敗しました: ${failures.join(", ")}`);
+        } else {
+          hideNotice();
+        }
+      }
+
+      function statusHtml(device) {
+        const label = statusLabels[device.status] || "Unknown";
+        return `
+          <div class="machine-name">
+            <span class="dot status-${escapeHtml(device.status)}" aria-hidden="true"></span>
+            <span>${label}</span>
+          </div>
+          <div class="status-label">${relativeTime(device.lastSeenAt)}</div>
+        `;
+      }
+
+      function machineHtml(device) {
+        return `
+          <div class="machine-name">
+            <span class="truncate">${escapeHtml(device.name || "Unknown")}</span>
+          </div>
+          <div class="subtle truncate">${escapeHtml(firstEmail(device) || device.lastUser?.name || "Unknown user")}</div>
+          <div class="subtle truncate">${escapeHtml([osName(device.deviceType || device.osVersion), profileName(device.profile)].filter(Boolean).join(" · ") || "Unknown")}</div>
+          <div class="badges">${badges(device).map((badge) => `<span class="badge">${escapeHtml(badge)}</span>`).join("")}</div>
+        `;
+      }
+
+      function addressesHtml(device) {
+        const addresses = device.registrations.flatMap((registration) => [
+          registration.virtualIpv4,
+          registration.virtualIpv6
+        ]).filter(Boolean);
+        if (!addresses.length && state.meta?.partialFailures?.includes("registrations")) return `<span class="subtle">Unavailable</span>`;
+        if (!addresses.length) return `<span class="subtle">—</span>`;
+        return addresses.slice(0, 4).map((address) => `
+          <div class="addr">
+            <code title="${escapeHtml(address)}">${escapeHtml(address)}</code>
+            <button class="copy-btn" type="button" data-copy="${escapeHtml(address)}" aria-label="Copy ${escapeHtml(address)}">⧉</button>
+          </div>
+        `).join("") + (addresses.length > 4 ? `<div class="subtle">${addresses.length - 4} more addresses</div>` : "");
+      }
+
+      function versionHtml(device) {
+        return `
+          <div>${escapeHtml(device.clientVersion || "Unknown")}</div>
+          <div class="subtle truncate">${escapeHtml([device.osVersion, device.osVersionExtra].filter(Boolean).join(" · ") || "Unknown OS")}</div>
+        `;
+      }
+
+      function lastSeenHtml(device) {
+        return `
+          <time datetime="${escapeHtml(device.lastSeenAt || "")}">${relativeTime(device.lastSeenAt)}</time>
+          <div class="subtle">${device.lastSeenAt ? escapeHtml(formatAbsolute(device.lastSeenAt)) : "Unknown"}</div>
+        `;
+      }
+
+      function openDrawer(device) {
+        els.drawerTitle.textContent = device.name || "Unknown";
+        els.drawerSubtitle.textContent = `${device.id} · ${statusLabels[device.status] || "Unknown"}`;
+        els.drawerContent.innerHTML = `
+          <section class="section">
+            <h3>Basic information</h3>
+            ${kv({
+              "Device ID": device.id,
+              "Machine": device.name,
+              "OS": [device.deviceType, device.osVersion, device.osVersionExtra].filter(Boolean).join(" · "),
+              "Cloudflare One Client": device.clientVersion,
+              "Manufacturer": device.manufacturer,
+              "Model": device.model,
+              "Created": formatMaybeDate(device.createdAt),
+              "Updated": formatMaybeDate(device.updatedAt),
+              "Last seen": formatMaybeDate(device.lastSeenAt),
+              "Active registrations": String(activeCount(device)),
+              "Profile": profileName(device.profile)
+            })}
+          </section>
+          <section class="section">
+            <h3>Registrations</h3>
+            ${device.registrations.length ? device.registrations.map(registrationHtml).join("") : '<div class="subtle">No registrations</div>'}
+          </section>
+          ${device.dex ? `<section class="section"><h3>DEX latest status</h3>${kv({
+            Status: device.dex.status,
+            Timestamp: formatMaybeDate(device.dex.timestamp),
+            Colo: device.dex.colo,
+            Mode: device.dex.mode,
+            "Connection type": device.dex.connectionType,
+            "Tunnel type": device.dex.tunnelType
+          })}</section>` : ""}
+        `;
+        els.drawerContent.querySelectorAll("[data-copy]").forEach((button) => {
+          button.addEventListener("click", () => copyText(button.dataset.copy, button));
+        });
+        els.drawerBackdrop.classList.add("show");
+        els.drawerBackdrop.setAttribute("aria-hidden", "false");
+      }
+
+      function closeDrawer() {
+        els.drawerBackdrop.classList.remove("show");
+        els.drawerBackdrop.setAttribute("aria-hidden", "true");
+      }
+
+      function registrationHtml(registration) {
+        return `
+          <article class="registration">
+            <div class="registration-title">
+              <span>${escapeHtml(registration.id)}</span>
+              <span class="badge">${registration.status === "active" ? "Active" : "Revoked"}</span>
+            </div>
+            ${kv({
+              User: [registration.user?.name, registration.user?.email].filter(Boolean).join(" · "),
+              IPv4: copyable(registration.virtualIpv4),
+              IPv6: copyable(registration.virtualIpv6),
+              "Tunnel type": registration.tunnelType,
+              "Key type": registration.keyType,
+              Created: formatMaybeDate(registration.createdAt),
+              "Last seen": formatMaybeDate(registration.lastSeenAt),
+              Updated: formatMaybeDate(registration.updatedAt),
+              Revoked: formatMaybeDate(registration.revokedAt),
+              Profile: profileName(registration.profile)
+            })}
+          </article>
+        `;
+      }
+
+      function kv(entries) {
+        return `<dl class="kv">${Object.entries(entries).map(([key, value]) => `
+          <dt>${escapeHtml(key)}</dt>
+          <dd>${value || value === 0 ? value : "—"}</dd>
+        `).join("")}</dl>`;
+      }
+
+      function copyable(value) {
+        if (!value) return "—";
+        return `<code>${escapeHtml(value)}</code> <button class="copy-btn" type="button" data-copy="${escapeHtml(value)}" aria-label="Copy ${escapeHtml(value)}">⧉</button>`;
+      }
+
+      async function copyText(value, button) {
+        await navigator.clipboard.writeText(value);
+        const previous = button.textContent;
+        button.textContent = "✓";
+        setTimeout(() => {
+          button.textContent = previous;
+        }, 900);
+      }
+
+      function badges(device) {
+        const values = [];
+        if (device.registrations.length > 1) values.push("Multiple registrations");
+        if (device.registrations.some((registration) => registration.keyType?.toLowerCase().includes("service"))) values.push("Service token");
+        if (device.status === "revoked") values.push("Revoked");
+        if (device.registrations.length && activeCount(device) === 0) values.push("No active registration");
+        if (device.status === "stale") values.push("Stale");
+        if (!device.osVersion && !device.deviceType) values.push("Unknown OS");
+        if (device.profile?.deleted || device.registrations.some((registration) => registration.profile?.deleted)) values.push("Profile deleted");
+        return values;
+      }
+
+      function searchBlob(device) {
+        return [
+          device.id,
+          device.name,
+          device.deviceType,
+          device.osVersion,
+          device.osVersionExtra,
+          device.clientVersion,
+          device.lastUser?.name,
+          device.lastUser?.email,
+          profileName(device.profile),
+          ...device.registrations.flatMap((registration) => [
+            registration.id,
+            registration.user?.name,
+            registration.user?.email,
+            registration.virtualIpv4,
+            registration.virtualIpv6,
+            registration.tunnelType,
+            registration.keyType,
+            profileName(registration.profile)
+          ])
+        ].filter(Boolean).join(" ").toLowerCase();
+      }
+
+      function firstEmail(device) {
+        return device.lastUser?.email || device.registrations.find((registration) => registration.user?.email)?.user.email;
+      }
+
+      function activeCount(device) {
+        return device.registrations.filter((registration) => registration.status === "active").length;
+      }
+
+      function osName(value) {
+        const lower = safe(value).toLowerCase();
+        if (lower.includes("windows")) return "Windows";
+        if (lower.includes("mac") || lower.includes("darwin")) return "macOS";
+        if (lower.includes("linux")) return "Linux";
+        if (lower.includes("android")) return "Android";
+        if (lower.includes("ios") || lower.includes("iphone") || lower.includes("ipad")) return "iOS";
+        if (lower.includes("chrome")) return "ChromeOS";
+        return value ? "Unknown OS" : "Unknown OS";
+      }
+
+      function profileName(profile) {
+        if (!profile) return "";
+        return profile.name || profile.id || "Unknown profile";
+      }
+
+      function unique(values) {
+        return [...new Set(values.filter(Boolean))];
+      }
+
+      function dateValue(value) {
+        const parsed = Date.parse(value || "");
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function relativeTime(value) {
+        if (!value) return "Unknown";
+        const seconds = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 1000));
+        if (seconds < 60) return "Just now";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} minutes ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hours ago`;
+        if (hours < 24 * 30) return formatShort(value);
+        return formatShort(value);
+      }
+
+      function formatShort(value) {
+        return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+      }
+
+      function formatAbsolute(value) {
+        return new Intl.DateTimeFormat(undefined, {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          timeZoneName: "short"
+        }).format(new Date(value));
+      }
+
+      function formatMaybeDate(value) {
+        return value ? escapeHtml(formatAbsolute(value)) : "—";
+      }
+
+      function showNotice(message) {
+        els.notice.textContent = message;
+        els.notice.classList.add("show");
+      }
+
+      function hideNotice() {
+        els.notice.textContent = "";
+        els.notice.classList.remove("show");
+      }
+
+      function safe(value) {
+        return value == null ? "" : String(value);
+      }
+
+      function escapeHtml(value) {
+        return safe(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+    </script>
+  </body>
+</html>

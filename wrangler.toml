@@ -1,0 +1,13 @@
+name = "zerotrust-dashboard"
+main = "src/index.ts"
+compatibility_date = "2026-07-20"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+[vars]
+REFRESH_INTERVAL_SECONDS = "60"
+RECENTLY_SEEN_THRESHOLD_SECONDS = "300"
+STALE_THRESHOLD_DAYS = "30"
+ENABLE_DEX = "false"
