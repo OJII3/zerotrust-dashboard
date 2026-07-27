@@ -1,5 +1,4 @@
 node_modules/
 .dev.vars
 .wrangler/
-.wrangler-secrets.json
 dist/
