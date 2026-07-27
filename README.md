@@ -51,7 +51,7 @@ Pushes to `main` and manual `workflow_dispatch` runs upload and deploy the Worke
 Configure these GitHub Actions secrets:
 
 - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID used by Wrangler
-- `CLOUDFLARE_API_TOKEN`: deployment token for Wrangler, scoped to edit this Worker
+- `CLOUDFLARE_ACCESS_TOKEN`: deployment token for Wrangler, scoped to edit this Worker
 
 Configure Worker runtime variables and secrets in Cloudflare before deployment:
 
@@ -62,7 +62,7 @@ Configure Worker runtime variables and secrets in Cloudflare before deployment:
 
 The workflow uses Bun for install and validation, then deploys with `cloudflare/wrangler-action`. It does not pass application runtime `CF_*` values through GitHub Actions.
 
-`CF_API_TOKEN` is the application runtime token used by the Worker when it calls the Cloudflare Zero Trust API. It is not a Wrangler authentication token. Wrangler authentication must use `CLOUDFLARE_API_TOKEN`.
+`CF_API_TOKEN` is the application runtime token used by the Worker when it calls the Cloudflare Zero Trust API. It is not a Wrangler authentication token. Wrangler authentication uses the `CLOUDFLARE_ACCESS_TOKEN` GitHub secret, mapped to Wrangler's expected `CLOUDFLARE_API_TOKEN` environment variable in CI.
 
 ## Endpoints
 
