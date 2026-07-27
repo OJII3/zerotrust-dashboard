@@ -44,6 +44,24 @@ The token should have read-only permissions:
 
 Do not grant Zero Trust write or DEX write permissions.
 
+## GitHub Actions Deployment
+
+Pushes to `main` and manual `workflow_dispatch` runs upload and deploy the Worker with `.github/workflows/deploy.yml`.
+
+Configure these GitHub Actions secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID used by Wrangler
+- `CLOUDFLARE_API_TOKEN`: deployment token for Wrangler, scoped to edit this Worker
+- `CF_API_TOKEN`: runtime token used by the Worker to read Zero Trust devices
+
+Configure these GitHub Actions variables:
+
+- `CF_ACCOUNT_ID`: Cloudflare account ID read by the Worker at runtime
+- `CF_ACCESS_TEAM_DOMAIN`: Access team domain, for example `example.cloudflareaccess.com`
+- `CF_ACCESS_AUD`: Access application audience tag
+
+The workflow uses Bun for install and validation, passes the runtime `CF_API_TOKEN` to Wrangler as a deploy-time secret file, then runs `wrangler deploy`.
+
 ## Endpoints
 
 - `GET /api/devices`
