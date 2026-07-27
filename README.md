@@ -52,15 +52,17 @@ Configure these GitHub Actions secrets:
 
 - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID used by Wrangler
 - `CLOUDFLARE_API_TOKEN`: deployment token for Wrangler, scoped to edit this Worker
-- `CF_API_TOKEN`: runtime token used by the Worker to read Zero Trust devices
 
-Configure these GitHub Actions variables:
+Configure Worker runtime variables and secrets in Cloudflare before deployment:
 
-- `CF_ACCOUNT_ID`: Cloudflare account ID read by the Worker at runtime
-- `CF_ACCESS_TEAM_DOMAIN`: Access team domain, for example `example.cloudflareaccess.com`
-- `CF_ACCESS_AUD`: Access application audience tag
+- `CF_ACCOUNT_ID`
+- `CF_ACCESS_TEAM_DOMAIN`
+- `CF_ACCESS_AUD`
+- `CF_API_TOKEN`
 
-The workflow uses Bun for install and validation, then deploys with `cloudflare/wrangler-action`. Runtime values are passed through the action's `secrets` and `vars` inputs.
+The workflow uses Bun for install and validation, then deploys with `cloudflare/wrangler-action`. It does not pass application runtime `CF_*` values through GitHub Actions.
+
+`CF_API_TOKEN` is the application runtime token used by the Worker when it calls the Cloudflare Zero Trust API. It is not a Wrangler authentication token. Wrangler authentication must use `CLOUDFLARE_API_TOKEN`.
 
 ## Endpoints
 
