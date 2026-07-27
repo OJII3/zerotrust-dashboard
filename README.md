@@ -60,7 +60,7 @@ Configure these GitHub Actions variables:
 - `CF_ACCESS_TEAM_DOMAIN`: Access team domain, for example `example.cloudflareaccess.com`
 - `CF_ACCESS_AUD`: Access application audience tag
 
-The workflow uses Bun for install and validation, passes the runtime `CF_API_TOKEN` to Wrangler as a deploy-time secret file, then runs `wrangler deploy`.
+The workflow uses Bun for install and validation, then deploys with `cloudflare/wrangler-action`. Runtime values are passed through the action's `secrets` and `vars` inputs.
 
 ## Endpoints
 
