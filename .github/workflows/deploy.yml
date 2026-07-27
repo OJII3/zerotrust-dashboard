@@ -37,7 +37,8 @@ jobs:
       - name: Prepare Worker runtime secrets
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: bun -e "await Bun.write('.wrangler-secrets.json', JSON.stringify({ CF_API_TOKEN: Bun.env.CF_API_TOKEN }))"
+        run: |
+          bun -e 'await Bun.write(".wrangler-secrets.json", JSON.stringify({ CF_API_TOKEN: Bun.env.CF_API_TOKEN }))'
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
