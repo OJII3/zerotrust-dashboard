@@ -36,11 +36,6 @@ jobs:
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
-          CF_ACCESS_TEAM_DOMAIN: ${{ vars.CF_ACCESS_TEAM_DOMAIN }}
-          CF_ACCESS_AUD: ${{ vars.CF_ACCESS_AUD }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -48,9 +43,3 @@ jobs:
           command: >-
             deploy
             --keep-vars
-          secrets: |
-            CF_API_TOKEN
-          vars: |
-            CF_ACCOUNT_ID
-            CF_ACCESS_TEAM_DOMAIN
-            CF_ACCESS_AUD
