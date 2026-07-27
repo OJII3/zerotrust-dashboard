@@ -1,0 +1,15 @@
+cloudflare_account_id      = "00000000000000000000000000000000"
+access_application_domain  = "machines.example.com"
+
+access_policy_include = [
+  {
+    email = {
+      email = "admin@example.com"
+    }
+  }
+]
+
+worker_custom_domain = {
+  zone_name = "example.com"
+  service   = "zerotrust-dashboard"
+}

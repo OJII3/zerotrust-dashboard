@@ -6,6 +6,7 @@ Tailscale-like devices dashboard for Cloudflare Zero Trust. Runs on Cloudflare W
 
 - Use `flake.nix` and `nix develop` for the development environment
 - Package manager and local JavaScript runtime: Bun
+- Local IaC CLI: OpenTofu
 - Deployment runtime: Cloudflare Workers
 - API routing: Elysia.js
 - UI: static HTML/CSS/JS served by the Worker assets binding
@@ -63,6 +64,35 @@ Configure Worker runtime variables and secrets in Cloudflare before deployment:
 The workflow uses Bun for install and validation, then deploys with `cloudflare/wrangler-action`. It does not pass application runtime `CF_*` values through GitHub Actions.
 
 `CF_API_TOKEN` is the application runtime token used by the Worker when it calls the Cloudflare Zero Trust API. It is not a Wrangler authentication token. Wrangler authentication uses the `CLOUDFLARE_ACCESS_TOKEN` GitHub secret, mapped to Wrangler's expected `CLOUDFLARE_API_TOKEN` environment variable in CI.
+
+## Terraform
+
+Cloudflare Access is managed from `terraform/`. OpenTofu state is stored in Cloudflare R2 through the S3 backend.
+
+Configure these GitHub Actions secrets for `.github/workflows/terraform.yml`:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_ACCESS_TOKEN`: Cloudflare API token with Access Apps and Policies write permissions
+- `TF_STATE_R2_ACCESS_KEY_ID`
+- `TF_STATE_R2_SECRET_ACCESS_KEY`
+
+Configure these GitHub Actions variables:
+
+- `TF_STATE_R2_BUCKET`: R2 bucket for Terraform state
+- `TF_STATE_R2_KEY`: state object key, for example `zerotrust-dashboard/terraform.tfstate`
+- `ACCESS_APPLICATION_DOMAIN`: Access-protected hostname, for example `machines.example.com`
+- `ACCESS_POLICY_INCLUDE_JSON`: Access include rules as JSON, for example `[{"email":{"email":"admin@example.com"}}]`
+- `WORKER_CUSTOM_DOMAIN_JSON`: optional Worker custom domain config, for example `{"zone_name":"example.com","service":"zerotrust-dashboard"}`
+
+The OpenTofu workflow runs `plan` on pull requests and `apply` on pushes to `main`. After the first apply, set the Worker runtime variable `CF_ACCESS_AUD` to the OpenTofu output `access_application_aud`.
+
+For local work:
+
+```sh
+cd terraform
+tofu init -backend-config=backend.r2.hcl
+tofu plan
+```
 
 ## Endpoints
 
