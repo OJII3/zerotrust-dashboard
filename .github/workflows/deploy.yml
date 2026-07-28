@@ -34,15 +34,41 @@ jobs:
       - name: Validate
         run: bun run check
 
+      - name: Check runtime configuration
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ACCESS_TEAM_DOMAIN: ${{ vars.CF_ACCESS_TEAM_DOMAIN }}
+          CF_ACCESS_AUD: ${{ secrets.CF_ACCESS_AUD }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          for name in CF_ACCOUNT_ID CF_ACCESS_TEAM_DOMAIN CF_ACCESS_AUD CF_API_TOKEN; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not configured"
+              exit 1
+            fi
+          done
+          if ! curl -sfS -o /dev/null "https://${CF_ACCESS_TEAM_DOMAIN}/cdn-cgi/access/certs"; then
+            echo "::error::CF_ACCESS_TEAM_DOMAIN does not serve Access JWKS: ${CF_ACCESS_TEAM_DOMAIN}"
+            exit 1
+          fi
+
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_ACCESS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ACCESS_TEAM_DOMAIN: ${{ vars.CF_ACCESS_TEAM_DOMAIN }}
+          CF_ACCESS_AUD: ${{ secrets.CF_ACCESS_AUD }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_ACCESS_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: bun
-          command: >-
-            deploy
-            --keep-vars
+          vars: |
+            CF_ACCOUNT_ID
+            CF_ACCESS_TEAM_DOMAIN
+            CF_ACCESS_AUD
+          secrets: |
+            CF_API_TOKEN
+          command: deploy

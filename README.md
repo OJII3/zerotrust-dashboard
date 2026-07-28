@@ -32,11 +32,7 @@ Copy `.dev.vars.example` to `.dev.vars` for local development and set:
 - `STALE_THRESHOLD_DAYS`
 - `ENABLE_DEX`
 
-Set the API token as a Worker secret in deployed environments:
-
-```sh
-wrangler secret put CF_API_TOKEN
-```
+In deployed environments these values come from GitHub Actions, not from the Cloudflare dashboard. See [GitHub Actions Deployment](#github-actions-deployment).
 
 The token should have read-only permissions:
 
@@ -53,15 +49,17 @@ Configure these GitHub Actions secrets:
 
 - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID used by Wrangler
 - `CLOUDFLARE_ACCESS_TOKEN`: deployment token for Wrangler, scoped to edit this Worker
+- `CF_ACCOUNT_ID`: Cloudflare account ID queried by the Worker at runtime
+- `CF_ACCESS_AUD`: Access audience tag, the OpenTofu output `access_application_aud`
+- `CF_API_TOKEN`: read-only Zero Trust token used by the Worker at runtime
 
-Configure Worker runtime variables and secrets in Cloudflare before deployment:
+Configure this GitHub Actions variable:
 
-- `CF_ACCOUNT_ID`
-- `CF_ACCESS_TEAM_DOMAIN`
-- `CF_ACCESS_AUD`
-- `CF_API_TOKEN`
+- `CF_ACCESS_TEAM_DOMAIN`: Zero Trust team domain, for example `example.cloudflareaccess.com`
 
-The workflow uses Bun for install and validation, then deploys with `cloudflare/wrangler-action`. It does not pass application runtime `CF_*` values through GitHub Actions.
+The workflow uses Bun for install and validation, then deploys with `cloudflare/wrangler-action`. GitHub Actions is the single source of truth for Worker runtime configuration: the deploy step binds `CF_ACCOUNT_ID`, `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` as plain vars and uploads `CF_API_TOKEN` as a Worker secret. The deploy no longer passes `--keep-vars`, so vars edited in the Cloudflare dashboard are replaced on the next deploy.
+
+A preceding step fails the run when any of these is unset, or when `CF_ACCESS_TEAM_DOMAIN` does not serve `/cdn-cgi/access/certs`. A wrong team domain otherwise deploys cleanly and only surfaces as `401 Unauthorized` from `/api/devices`, because the Worker cannot fetch the JWKS it verifies the Access JWT against.
 
 `CF_API_TOKEN` is the application runtime token used by the Worker when it calls the Cloudflare Zero Trust API. It is not a Wrangler authentication token. Wrangler authentication uses the `CLOUDFLARE_ACCESS_TOKEN` GitHub secret, mapped to Wrangler's expected `CLOUDFLARE_API_TOKEN` environment variable in CI.
 
