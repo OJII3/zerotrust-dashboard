@@ -12,7 +12,12 @@ resource "cloudflare_zero_trust_access_application" "dashboard" {
   auto_redirect_to_identity  = length(var.access_allowed_idps) == 1 ? var.access_auto_redirect_to_identity : false
   enable_binding_cookie      = true
   http_only_cookie_attribute = true
-  same_site_cookie_attribute = "strict"
+
+  # Must not be "strict". The identity provider returns the browser to this
+  # domain from the team domain, which the browser counts as a cross-site
+  # navigation, so a strict CF_Authorization cookie is withheld and Access
+  # bounces the request back to login forever (ERR_TOO_MANY_REDIRECTS).
+  same_site_cookie_attribute = "lax"
 
   policies = [{
     name       = var.access_policy_name
