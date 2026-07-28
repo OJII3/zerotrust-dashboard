@@ -32,11 +32,13 @@
             packages = [
               pkgs.bun
               pkgs.git
+              pkgs.opentofu
             ];
 
             shellHook = ''
               echo "Zero Trust Machines Dashboard"
               echo "Runtime: Bun"
+              echo "IaC CLI: OpenTofu"
               echo "Install dependencies: bun install"
               echo "Start dev server: bun run dev"
             '';
