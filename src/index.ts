@@ -21,6 +21,11 @@ interface AccessUser {
   sub?: string;
 }
 
+interface AccessVerificationResult {
+  viewer: AccessUser | null;
+  reason?: "missing_header" | "missing_config" | "jwt_verify_failed";
+}
+
 interface CloudflareListResponse<T> {
   success: boolean;
   errors?: Array<{ code?: number; message?: string }>;
@@ -177,8 +182,9 @@ const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 const app = new Elysia({ adapter: CloudflareAdapter })
   .get("/api/devices", async ({ request, query, set }) => {
     const env = cfEnv as unknown as Env;
-    const viewer = await verifyAccessJwt(request, env);
+    const { viewer, reason } = await verifyAccessJwt(request, env);
     if (!viewer) {
+      console.warn("access_jwt_unauthorized", { reason });
       set.status = 401;
       return { error: "Unauthorized" };
     }
@@ -203,9 +209,13 @@ const app = new Elysia({ adapter: CloudflareAdapter })
 
 export default app;
 
-async function verifyAccessJwt(request: Request, env: Env): Promise<AccessUser | null> {
+async function verifyAccessJwt(request: Request, env: Env): Promise<AccessVerificationResult> {
   const token = request.headers.get("Cf-Access-Jwt-Assertion");
-  if (!token) return null;
+  if (!token) return { viewer: null, reason: "missing_header" };
+
+  if (!env.CF_ACCESS_TEAM_DOMAIN || !env.CF_ACCESS_AUD) {
+    return { viewer: null, reason: "missing_config" };
+  }
 
   const teamDomain = normalizeTeamDomain(env.CF_ACCESS_TEAM_DOMAIN);
   const issuer = `https://${teamDomain}`;
@@ -219,13 +229,15 @@ async function verifyAccessJwt(request: Request, env: Env): Promise<AccessUser |
     });
 
     return {
-      email: typeof payload.email === "string" ? payload.email : undefined,
-      name: typeof payload.name === "string" ? payload.name : undefined,
-      sub: typeof payload.sub === "string" ? payload.sub : undefined
+      viewer: {
+        email: typeof payload.email === "string" ? payload.email : undefined,
+        name: typeof payload.name === "string" ? payload.name : undefined,
+        sub: typeof payload.sub === "string" ? payload.sub : undefined
+      }
     };
   } catch (error) {
     console.error("access_jwt_verification_failed", serializeLogError(error));
-    return null;
+    return { viewer: null, reason: "jwt_verify_failed" };
   }
 }
 
