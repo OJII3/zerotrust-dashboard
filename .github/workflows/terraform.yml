@@ -127,3 +127,13 @@ jobs:
       - name: Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: tofu apply -no-color -auto-approve tfplan
+
+      - name: Write outputs
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          {
+            echo "## OpenTofu outputs"
+            echo
+            echo "- access_application_aud: \`$(tofu output -raw access_application_aud)\`"
+            echo "- access_application_domain: \`$(tofu output -raw access_application_domain)\`"
+          } >> "$GITHUB_STEP_SUMMARY"
