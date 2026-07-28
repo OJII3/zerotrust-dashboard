@@ -760,18 +760,28 @@
       }
 
       function addressesHtml(device) {
+        const dnsHtml = state.meta?.dnsEnabled && device.dnsHostname ? addrRow(device.dnsHostname) : "";
         const addresses = device.registrations.flatMap((registration) => [
           registration.virtualIpv4,
           registration.virtualIpv6
         ]).filter(Boolean);
-        if (!addresses.length && state.meta?.partialFailures?.includes("registrations")) return `<span class="subtle">Unavailable</span>`;
-        if (!addresses.length) return `<span class="subtle">—</span>`;
-        return addresses.slice(0, 4).map((address) => `
+
+        if (!addresses.length && !dnsHtml) {
+          if (state.meta?.partialFailures?.includes("registrations")) return `<span class="subtle">Unavailable</span>`;
+          return `<span class="subtle">—</span>`;
+        }
+
+        return dnsHtml + addresses.slice(0, 4).map(addrRow).join("")
+          + (addresses.length > 4 ? `<div class="subtle">${addresses.length - 4} more addresses</div>` : "");
+      }
+
+      function addrRow(address) {
+        return `
           <div class="addr">
             <code title="${escapeHtml(address)}">${escapeHtml(address)}</code>
             <button class="copy-btn" type="button" data-copy="${escapeHtml(address)}" aria-label="Copy ${escapeHtml(address)}">⧉</button>
           </div>
-        `).join("") + (addresses.length > 4 ? `<div class="subtle">${addresses.length - 4} more addresses</div>` : "");
+        `;
       }
 
       function versionHtml(device) {
@@ -797,6 +807,7 @@
             ${kv({
               "Device ID": device.id,
               "Machine": device.name,
+              ...(state.meta?.dnsEnabled ? { "DNS hostname": copyable(device.dnsHostname) } : {}),
               "OS": [device.deviceType, device.osVersion, device.osVersionExtra].filter(Boolean).join(" · "),
               "Cloudflare One Client": device.clientVersion,
               "Manufacturer": device.manufacturer,
@@ -893,6 +904,7 @@
         return [
           device.id,
           device.name,
+          device.dnsHostname,
           device.deviceType,
           device.osVersion,
           device.osVersionExtra,

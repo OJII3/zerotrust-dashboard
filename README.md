@@ -31,15 +31,19 @@ Copy `.dev.vars.example` to `.dev.vars` for local development and set:
 - `RECENTLY_SEEN_THRESHOLD_SECONDS`
 - `STALE_THRESHOLD_DAYS`
 - `ENABLE_DEX`
+- `CF_DNS_ZONE_ID`
+- `ENABLE_DNS_SYNC`
+- `DNS_BASE_DOMAIN`
 
 In deployed environments these values come from GitHub Actions, not from the Cloudflare dashboard. See [GitHub Actions Deployment](#github-actions-deployment).
 
-The token should have read-only permissions:
+The token should have these permissions:
 
 - `Zero Trust Read`
 - `Cloudflare DEX Read` only when `ENABLE_DEX=true`
+- `Zone DNS Edit`, scoped to the zone identified by `CF_DNS_ZONE_ID`, only when `ENABLE_DNS_SYNC=true`
 
-Do not grant Zero Trust write or DEX write permissions.
+Do not grant Zero Trust write, DEX write, or any DNS permission on zones other than the one `CF_DNS_ZONE_ID` points to.
 
 ## GitHub Actions Deployment
 
@@ -53,9 +57,10 @@ Configure these GitHub Actions secrets:
 - `CF_ACCESS_AUD`: Access audience tag, the OpenTofu output `access_application_aud`
 - `CF_API_TOKEN`: read-only Zero Trust token used by the Worker at runtime
 
-Configure this GitHub Actions variable:
+Configure these GitHub Actions variables:
 
 - `CF_ACCESS_TEAM_DOMAIN`: Zero Trust team domain, for example `example.cloudflareaccess.com`
+- `CF_DNS_ZONE_ID`: Cloudflare zone ID for the zone that hosts `DNS_BASE_DOMAIN`. Only required when `ENABLE_DNS_SYNC=true`.
 
 The workflow uses Bun for install and validation, then deploys with `cloudflare/wrangler-action`. GitHub Actions is the single source of truth for Worker runtime configuration: the deploy step binds `CF_ACCOUNT_ID`, `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` as plain vars and uploads `CF_API_TOKEN` as a Worker secret. The deploy no longer passes `--keep-vars`, so vars edited in the Cloudflare dashboard are replaced on the next deploy.
 
@@ -99,6 +104,12 @@ tofu plan
 The Worker fetches Cloudflare physical devices and device registrations with GET requests only, groups registrations by physical device ID, removes sensitive registration fields such as `key`, and returns normalized dashboard data to the browser.
 
 When `ENABLE_DEX=true`, the Worker also fetches DEX fleet status and uses it to display connected/offline status. When disabled, status falls back to `last_seen_at` and avoids claiming real-time online state.
+
+## DNS auto-sync
+
+When `ENABLE_DNS_SYNC=true`, a Cron Trigger (`*/5 * * * *`, configured in `wrangler.toml`) runs `reconcileDns` on a schedule. For every device with at least one non-revoked registration, it computes `<slugified-device-name>.<DNS_BASE_DOMAIN>` (default `internal.ojii3.dev`) and creates or updates a DNS-only (unproxied) A record pointing at that registration's WARP virtual IPv4 address, picking the most recently seen active registration when a device has several. Devices with no active registration are skipped. This mirrors Tailscale-style `ssh <hostname>` access: with the Zero Trust Devices WARP Onboarding profile's DNS suffix set to the same `DNS_BASE_DOMAIN`, a bare hostname resolves through WARP to that device's virtual IP.
+
+Each run lists the zone's existing A records, filters to those under `.${DNS_BASE_DOMAIN}`, and only ever creates, updates, or deletes records within that scope — no other record in the zone is touched. A record is deleted once its device no longer has a matching desired hostname (device removed, or its last registration revoked). Same-named devices are disambiguated by appending the first 8 characters of the device ID to every device sharing that name.
 
 ## Verification
 

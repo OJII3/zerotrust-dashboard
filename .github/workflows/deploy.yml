@@ -61,6 +61,7 @@ jobs:
           CF_ACCESS_TEAM_DOMAIN: ${{ vars.CF_ACCESS_TEAM_DOMAIN }}
           CF_ACCESS_AUD: ${{ secrets.CF_ACCESS_AUD }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_DNS_ZONE_ID: ${{ vars.CF_DNS_ZONE_ID }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_ACCESS_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -69,6 +70,7 @@ jobs:
             CF_ACCOUNT_ID
             CF_ACCESS_TEAM_DOMAIN
             CF_ACCESS_AUD
+            CF_DNS_ZONE_ID
           secrets: |
             CF_API_TOKEN
           command: deploy
