@@ -29,10 +29,11 @@
         { pkgs }:
         {
           default = pkgs.mkShell {
-            packages = [
-              pkgs.bun
-              pkgs.git
-              pkgs.opentofu
+            packages = with pkgs; [
+              bun
+              nodejs-slim_24
+              git
+              opentofu
             ];
 
             shellHook = ''
