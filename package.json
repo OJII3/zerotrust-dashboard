@@ -10,7 +10,7 @@
     "deploy": "wrangler deploy",
     "dry-run": "wrangler deploy --dry-run",
     "test": "bun test",
-    "check": "bun run typecheck && bun run dry-run",
+    "check": "bun run typecheck && bun run build && bun run dry-run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
