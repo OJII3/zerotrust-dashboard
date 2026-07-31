@@ -221,23 +221,24 @@
       }
 
       .status-cell {
-        width: 152px;
+        width: 64px;
+        text-align: center;
+      }
+
+      td:first-child {
+        text-align: center;
       }
 
       .machine-cell {
-        width: 30%;
+        width: 34%;
       }
 
       .address-cell {
-        width: 26%;
-      }
-
-      .version-cell {
-        width: 18%;
+        width: 32%;
       }
 
       .last-seen-cell {
-        width: 18%;
+        width: 26%;
       }
 
       .machine-name {
@@ -299,12 +300,6 @@
 
       .status-revoked {
         color: var(--danger);
-      }
-
-      .status-label {
-        margin-top: 4px;
-        color: var(--muted);
-        font-size: 12px;
       }
 
       .addr {
@@ -438,11 +433,38 @@
         }
 
         .table-wrap {
-          overflow-x: auto;
+          overflow: hidden;
         }
 
-        table {
-          min-width: 980px;
+        th,
+        td {
+          padding: 10px 6px;
+        }
+
+        .status-cell {
+          width: 36px;
+        }
+
+        .machine-cell {
+          width: 34%;
+        }
+
+        .address-cell {
+          width: 34%;
+        }
+
+        .last-seen-cell {
+          width: 24%;
+        }
+
+        .addr {
+          grid-template-columns: minmax(0, 1fr) 26px;
+          gap: 4px;
+        }
+
+        .copy-btn {
+          width: 26px;
+          min-height: 28px;
         }
 
         .drawer {
@@ -513,7 +535,6 @@
               <th class="status-cell">Status</th>
               <th class="machine-cell">Machine</th>
               <th class="address-cell">Addresses</th>
-              <th class="version-cell">Version</th>
               <th class="last-seen-cell">Last Seen</th>
             </tr>
           </thead>
@@ -536,7 +557,9 @@
       </aside>
     </div>
 
-    <script>
+    <script type="module">
+      import { addressesHtml, statusHtml } from "./dashboard-renderers.js";
+
       const state = {
         devices: [],
         summary: null,
@@ -668,10 +691,9 @@
             if (event.key === "Enter") openDrawer(device);
           });
           row.innerHTML = `
-            <td>${statusHtml(device)}</td>
+            <td>${statusHtml(device.status)}</td>
             <td>${machineHtml(device)}</td>
-            <td>${addressesHtml(device)}</td>
-            <td>${versionHtml(device)}</td>
+            <td>${addressesHtml(device.registrations, state.meta?.partialFailures?.includes("registrations"))}</td>
             <td>${lastSeenHtml(device)}</td>
           `;
           row.querySelectorAll("[data-copy]").forEach((button) => {
@@ -737,17 +759,6 @@
         }
       }
 
-      function statusHtml(device) {
-        const label = statusLabels[device.status] || "Unknown";
-        return `
-          <div class="machine-name">
-            <span class="dot status-${escapeHtml(device.status)}" aria-hidden="true"></span>
-            <span>${label}</span>
-          </div>
-          <div class="status-label">${relativeTime(device.lastSeenAt)}</div>
-        `;
-      }
-
       function machineHtml(device) {
         return `
           <div class="machine-name">
@@ -756,38 +767,6 @@
           <div class="subtle truncate">${escapeHtml(firstEmail(device) || device.lastUser?.name || "Unknown user")}</div>
           <div class="subtle truncate">${escapeHtml([osName(device.deviceType || device.osVersion), profileName(device.profile)].filter(Boolean).join(" · ") || "Unknown")}</div>
           <div class="badges">${badges(device).map((badge) => `<span class="badge">${escapeHtml(badge)}</span>`).join("")}</div>
-        `;
-      }
-
-      function addressesHtml(device) {
-        const dnsHtml = state.meta?.dnsEnabled && device.dnsHostname ? addrRow(device.dnsHostname) : "";
-        const addresses = device.registrations.flatMap((registration) => [
-          registration.virtualIpv4,
-          registration.virtualIpv6
-        ]).filter(Boolean);
-
-        if (!addresses.length && !dnsHtml) {
-          if (state.meta?.partialFailures?.includes("registrations")) return `<span class="subtle">Unavailable</span>`;
-          return `<span class="subtle">—</span>`;
-        }
-
-        return dnsHtml + addresses.slice(0, 4).map(addrRow).join("")
-          + (addresses.length > 4 ? `<div class="subtle">${addresses.length - 4} more addresses</div>` : "");
-      }
-
-      function addrRow(address) {
-        return `
-          <div class="addr">
-            <code title="${escapeHtml(address)}">${escapeHtml(address)}</code>
-            <button class="copy-btn" type="button" data-copy="${escapeHtml(address)}" aria-label="Copy ${escapeHtml(address)}">⧉</button>
-          </div>
-        `;
-      }
-
-      function versionHtml(device) {
-        return `
-          <div>${escapeHtml(device.clientVersion || "Unknown")}</div>
-          <div class="subtle truncate">${escapeHtml([device.osVersion, device.osVersionExtra].filter(Boolean).join(" · ") || "Unknown OS")}</div>
         `;
       }
 

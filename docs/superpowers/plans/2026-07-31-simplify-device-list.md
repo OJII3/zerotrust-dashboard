@@ -8,6 +8,11 @@
 
 **Tech Stack:** Static HTML/CSS/JavaScript, Bun test runner, TypeScript, Cloudflare Workers/Wrangler
 
+**Execution note:** During pre-implementation review, the source-text
+regression tests below were replaced with behavioral tests for an extracted
+`public/dashboard-renderers.js` module. This avoids coupling tests to function
+source formatting while exercising the exact renderer shipped to browsers.
+
 ## Global Constraints
 
 - The list contains exactly Status, Machine, Addresses, and Last Seen columns.
