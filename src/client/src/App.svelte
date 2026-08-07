@@ -231,7 +231,7 @@
             {selected.dnsHostname || "—"}
             {#if selected.dnsHostname}<button
                 class="icon"
-                onclick={() => copy(selected.dnsHostname!)}>⧉</button
+                onclick={() => copy(selected!.dnsHostname!)}>⧉</button
               >{/if}
           </dd>
           <dt>Profile</dt>
