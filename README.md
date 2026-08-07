@@ -21,7 +21,7 @@ This project intentionally standardizes on Bun for dependency installation and l
 
 ### Code quality
 
-Run `bun run format` to apply Oxfmt formatting. Use `bun run format:check` to verify formatting without changing files, `bun run lint` for Oxlint correctness checks, and `bun run svelte-check` for Svelte diagnostics. `bun run check` runs all of these checks plus tests, the build, and Wrangler dry-run.
+Run `bun run format` to apply Oxfmt formatting. Use `bun run format:check` to verify formatting without changing files, `bun run lint` for Oxlint correctness checks, and `bun run svelte-check` for Svelte diagnostics. `bun run check` runs `format:check`, `lint`, `svelte-check`, `typecheck`, tests, the build, and Wrangler dry-run.
 
 ## Configuration
 
