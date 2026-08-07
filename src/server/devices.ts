@@ -115,13 +115,20 @@ export interface DashboardDevice {
 }
 
 export function fetchPhysicalDevices(env: Env): Promise<PhysicalDevice[]> {
-  return fetchAllPages<PhysicalDevice>(env, `/accounts/${env.CF_ACCOUNT_ID}/devices/physical-devices`);
+  return fetchAllPages<PhysicalDevice>(
+    env,
+    `/accounts/${env.CF_ACCOUNT_ID}/devices/physical-devices`,
+  );
 }
 
 export function fetchDeviceRegistrations(env: Env): Promise<DeviceRegistration[]> {
-  return fetchAllPages<DeviceRegistration>(env, `/accounts/${env.CF_ACCOUNT_ID}/devices/registrations`, {
-    status: "all"
-  });
+  return fetchAllPages<DeviceRegistration>(
+    env,
+    `/accounts/${env.CF_ACCOUNT_ID}/devices/registrations`,
+    {
+      status: "all",
+    },
+  );
 }
 
 export function normalizeDevices(
@@ -129,7 +136,7 @@ export function normalizeDevices(
   registrations: DeviceRegistration[],
   dexDevices: DexDevice[],
   recentlySeenThresholdSeconds: number,
-  staleThresholdDays: number
+  staleThresholdDays: number,
 ): DashboardDevice[] {
   const registrationsByDevice = new Map<string, DeviceRegistration[]>();
   for (const registration of registrations) {
@@ -153,7 +160,7 @@ export function normalizeDevices(
     const lastSeenAt = latestDate([
       device.last_seen_at,
       ...normalizedRegistrations.map((registration) => registration.lastSeenAt),
-      dex?.timestamp
+      dex?.timestamp,
     ]);
 
     return {
@@ -163,7 +170,13 @@ export function normalizeDevices(
       osVersion: device.os_version,
       osVersionExtra: device.os_version_extra,
       clientVersion: device.client_version,
-      status: deriveStatus(dex, lastSeenAt, normalizedRegistrations, recentlySeenThresholdSeconds, staleThresholdDays),
+      status: deriveStatus(
+        dex,
+        lastSeenAt,
+        normalizedRegistrations,
+        recentlySeenThresholdSeconds,
+        staleThresholdDays,
+      ),
       lastSeenAt,
       createdAt: device.created_at || "",
       updatedAt: device.updated_at || "",
@@ -179,9 +192,9 @@ export function normalizeDevices(
             colo: dex.colo,
             mode: dex.mode,
             connectionType: dex.connectionType ?? dex.connection_type,
-            tunnelType: dex.tunnelType ?? dex.tunnel_type
+            tunnelType: dex.tunnelType ?? dex.tunnel_type,
           }
-        : undefined
+        : undefined,
     };
   });
 }
@@ -199,7 +212,7 @@ function normalizeRegistration(registration: DeviceRegistration): DashboardRegis
     updatedAt: registration.updated_at,
     revokedAt: registration.revoked_at,
     status: registration.revoked_at ? "revoked" : "active",
-    profile: normalizeProfile(registration.policy)
+    profile: normalizeProfile(registration.policy),
   };
 }
 
@@ -208,7 +221,7 @@ function normalizeProfile(policy?: CloudflarePolicy): DashboardProfile | undefin
   return {
     id: policy.id,
     name: policy.name,
-    deleted: Boolean(policy.deleted)
+    deleted: Boolean(policy.deleted),
   };
 }
 
@@ -217,7 +230,7 @@ function sanitizeUser(user?: CloudflareUser): CloudflareUser | undefined {
   return {
     id: user.id,
     name: user.name,
-    email: user.email
+    email: user.email,
   };
 }
 
@@ -226,7 +239,7 @@ function deriveStatus(
   lastSeenAt: string | undefined,
   registrations: DashboardRegistration[],
   recentlySeenThresholdSeconds: number,
-  staleThresholdDays: number
+  staleThresholdDays: number,
 ): DashboardDevice["status"] {
   if (dex?.status) {
     const status = dex.status.toLowerCase();
@@ -248,11 +261,15 @@ export function summarize(devices: DashboardDevice[]) {
   return {
     devices: devices.length,
     activeRegistrations: devices.reduce(
-      (total, device) => total + device.registrations.filter((registration) => registration.status === "active").length,
-      0
+      (total, device) =>
+        total +
+        device.registrations.filter((registration) => registration.status === "active").length,
+      0,
     ),
-    recentlySeen: devices.filter((device) => device.status === "connected" || device.status === "recently_seen").length,
-    staleDevices: devices.filter((device) => device.status === "stale").length
+    recentlySeen: devices.filter(
+      (device) => device.status === "connected" || device.status === "recently_seen",
+    ).length,
+    staleDevices: devices.filter((device) => device.status === "stale").length,
   };
 }
 

@@ -36,7 +36,7 @@ export interface DnsRecord {
 export async function fetchAllPages<T>(
   env: Env,
   path: string,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
 ): Promise<T[]> {
   const results: T[] = [];
   let cursor: string | undefined;
@@ -60,7 +60,7 @@ export async function fetchAllPages<T>(
 export async function fetchAllDnsRecords(
   env: Env,
   zoneId: string,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
 ): Promise<DnsRecord[]> {
   const results: DnsRecord[] = [];
   const perPage = 100;
@@ -89,10 +89,16 @@ export async function fetchAllDnsRecords(
 export async function createDnsRecord(
   env: Env,
   zoneId: string,
-  record: { type: string; name: string; content: string; ttl: number; proxied: boolean }
+  record: { type: string; name: string; content: string; ttl: number; proxied: boolean },
 ): Promise<DnsRecord> {
   const path = `/zones/${zoneId}/dns_records`;
-  const body = await cfFetch<CloudflareSingleResponse<DnsRecord>>(env, "POST", new URL(`${API_BASE}${path}`), path, record);
+  const body = await cfFetch<CloudflareSingleResponse<DnsRecord>>(
+    env,
+    "POST",
+    new URL(`${API_BASE}${path}`),
+    path,
+    record,
+  );
   if (!body.result) throw new Error(`${path} succeeded without a result`);
   return body.result;
 }
@@ -101,42 +107,49 @@ export async function updateDnsRecord(
   env: Env,
   zoneId: string,
   recordId: string,
-  patch: { content: string }
+  patch: { content: string },
 ): Promise<DnsRecord> {
   const path = `/zones/${zoneId}/dns_records/${recordId}`;
-  const body = await cfFetch<CloudflareSingleResponse<DnsRecord>>(env, "PATCH", new URL(`${API_BASE}${path}`), path, patch);
+  const body = await cfFetch<CloudflareSingleResponse<DnsRecord>>(
+    env,
+    "PATCH",
+    new URL(`${API_BASE}${path}`),
+    path,
+    patch,
+  );
   if (!body.result) throw new Error(`${path} succeeded without a result`);
   return body.result;
 }
 
 export async function deleteDnsRecord(env: Env, zoneId: string, recordId: string): Promise<void> {
   const path = `/zones/${zoneId}/dns_records/${recordId}`;
-  await cfFetch<CloudflareSingleResponse<{ id: string }>>(env, "DELETE", new URL(`${API_BASE}${path}`), path);
+  await cfFetch<CloudflareSingleResponse<{ id: string }>>(
+    env,
+    "DELETE",
+    new URL(`${API_BASE}${path}`),
+    path,
+  );
 }
 
-async function cfFetch<T extends { success: boolean; errors?: Array<{ code?: number; message?: string }> }>(
-  env: Env,
-  method: string,
-  url: URL,
-  logPath: string,
-  jsonBody?: unknown
-): Promise<T> {
+async function cfFetch<
+  T extends { success: boolean; errors?: Array<{ code?: number; message?: string }> },
+>(env: Env, method: string, url: URL, logPath: string, jsonBody?: unknown): Promise<T> {
   const started = Date.now();
   const response = await fetch(url, {
     method,
     headers: {
       Authorization: `Bearer ${env.CF_API_TOKEN}`,
       Accept: "application/json",
-      ...(jsonBody ? { "Content-Type": "application/json" } : {})
+      ...(jsonBody ? { "Content-Type": "application/json" } : {}),
     },
-    body: jsonBody ? JSON.stringify(jsonBody) : undefined
+    body: jsonBody ? JSON.stringify(jsonBody) : undefined,
   });
 
   console.log("cloudflare_api_request", {
     method,
     path: logPath,
     status: response.status,
-    durationMs: Date.now() - started
+    durationMs: Date.now() - started,
   });
 
   const body = (await response.json()) as T;
@@ -150,9 +163,11 @@ async function cfFetch<T extends { success: boolean; errors?: Array<{ code?: num
 export function apiErrorMessage(
   path: string,
   status: number,
-  body: { errors?: Array<{ code?: number; message?: string }> }
+  body: { errors?: Array<{ code?: number; message?: string }> },
 ): string {
-  const message = body.errors?.map((error) => `${error.code ?? "unknown"} ${error.message ?? ""}`.trim()).join("; ");
+  const message = body.errors
+    ?.map((error) => `${error.code ?? "unknown"} ${error.message ?? ""}`.trim())
+    .join("; ");
   return `${path} failed with HTTP ${status}${message ? `: ${message}` : ""}`;
 }
 

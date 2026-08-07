@@ -4,7 +4,7 @@ const statusLabels = {
   offline: "Offline",
   stale: "Stale",
   revoked: "Revoked",
-  unknown: "Unknown"
+  unknown: "Unknown",
 };
 
 export function statusHtml(status) {
@@ -13,19 +13,17 @@ export function statusHtml(status) {
 }
 
 export function addressesHtml(registrations, unavailable = false) {
-  const addresses = registrations
-    .map((registration) => registration.virtualIpv4)
-    .filter(Boolean);
+  const addresses = registrations.map((registration) => registration.virtualIpv4).filter(Boolean);
 
   if (!addresses.length) {
     if (unavailable) return `<span class="subtle">Unavailable</span>`;
     return `<span class="subtle">—</span>`;
   }
 
-  return addresses.slice(0, 4).map(addrRow).join("")
-    + (addresses.length > 4
-      ? `<div class="subtle">${addresses.length - 4} more addresses</div>`
-      : "");
+  return (
+    addresses.slice(0, 4).map(addrRow).join("") +
+    (addresses.length > 4 ? `<div class="subtle">${addresses.length - 4} more addresses</div>` : "")
+  );
 }
 
 function addrRow(address) {

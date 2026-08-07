@@ -6,7 +6,7 @@ import {
   normalizeDevices,
   summarize,
   type DashboardDevice,
-  type DexDevice
+  type DexDevice,
 } from "./devices";
 import type { AccessUser } from "./access";
 import { computeHostnames, DEFAULT_DNS_BASE_DOMAIN } from "./dns";
@@ -39,7 +39,11 @@ export interface DevicesPayload {
 
 const cache = new Map<string, CacheEntry>();
 
-export async function getDevicesPayload(env: Env, viewer: AccessUser, forceRefresh = false): Promise<DevicesPayload> {
+export async function getDevicesPayload(
+  env: Env,
+  viewer: AccessUser,
+  forceRefresh = false,
+): Promise<DevicesPayload> {
   const ttlSeconds = numberFromEnv(env.REFRESH_INTERVAL_SECONDS, 60, 15);
   const cacheKey = env.CF_ACCOUNT_ID;
   const now = Date.now();
@@ -50,9 +54,9 @@ export async function getDevicesPayload(env: Env, viewer: AccessUser, forceRefre
       ...cached.response,
       meta: {
         ...cached.response.meta,
-        cache: "hit"
+        cache: "hit",
       },
-      viewer
+      viewer,
     };
   }
 
@@ -62,9 +66,9 @@ export async function getDevicesPayload(env: Env, viewer: AccessUser, forceRefre
     fetchDeviceRegistrations(env),
     enabled(env.ENABLE_DEX)
       ? fetchAllPages<DexDevice>(env, `/accounts/${env.CF_ACCOUNT_ID}/dex/fleet-status/devices`, {
-          source: "last_seen"
+          source: "last_seen",
         })
-      : Promise.resolve([] as DexDevice[])
+      : Promise.resolve([] as DexDevice[]),
   ]);
 
   if (physicalResult.status === "rejected") {
@@ -74,9 +78,9 @@ export async function getDevicesPayload(env: Env, viewer: AccessUser, forceRefre
         meta: {
           ...cached.response.meta,
           cache: "stale",
-          partialFailures: ["physical-devices"]
+          partialFailures: ["physical-devices"],
         },
-        viewer
+        viewer,
       };
     }
     throw physicalResult.reason;
@@ -93,7 +97,7 @@ export async function getDevicesPayload(env: Env, viewer: AccessUser, forceRefre
     registrations,
     dexDevices,
     recentlySeenThresholdSeconds,
-    staleThresholdDays
+    staleThresholdDays,
   );
 
   const dnsEnabled = enabled(env.ENABLE_DNS_SYNC);
@@ -115,16 +119,20 @@ export async function getDevicesPayload(env: Env, viewer: AccessUser, forceRefre
       staleThresholdDays,
       dexEnabled: enabled(env.ENABLE_DEX),
       dnsEnabled,
-      partialFailures
+      partialFailures,
     },
-    viewer
+    viewer,
   };
 
   cache.set(cacheKey, { response, fetchedAt: now });
   return response;
 }
 
-function settledOrEmpty<T>(result: PromiseSettledResult<T[]>, label: string, partialFailures: string[]): T[] {
+function settledOrEmpty<T>(
+  result: PromiseSettledResult<T[]>,
+  label: string,
+  partialFailures: string[],
+): T[] {
   if (result.status === "fulfilled") return result.value;
   partialFailures.push(label);
   return [];

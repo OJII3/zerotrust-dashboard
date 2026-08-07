@@ -25,7 +25,7 @@ const app = new Elysia({ adapter: CloudflareAdapter })
       set.status = 502;
       return {
         error: "Cloudflare APIから最新情報を取得できませんでした。",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       };
     }
   })
@@ -40,12 +40,18 @@ async function scheduled(): Promise<void> {
   const env = cfEnv as unknown as Env;
   const [physicalDevices, registrations] = await Promise.all([
     fetchPhysicalDevices(env),
-    fetchDeviceRegistrations(env)
+    fetchDeviceRegistrations(env),
   ]);
 
   const recentlySeenThresholdSeconds = numberFromEnv(env.RECENTLY_SEEN_THRESHOLD_SECONDS, 300, 1);
   const staleThresholdDays = numberFromEnv(env.STALE_THRESHOLD_DAYS, 30, 1);
-  const devices = normalizeDevices(physicalDevices, registrations, [], recentlySeenThresholdSeconds, staleThresholdDays);
+  const devices = normalizeDevices(
+    physicalDevices,
+    registrations,
+    [],
+    recentlySeenThresholdSeconds,
+    staleThresholdDays,
+  );
 
   await reconcileDns(env, devices);
 }

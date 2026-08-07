@@ -5,17 +5,17 @@
   "compatibility_date": "2026-07-20",
   "assets": {
     "directory": "dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": ["*/5 * * * *"],
   },
   "vars": {
-    "REFRESH_INTERVAL_SECONDS" : 60,
+    "REFRESH_INTERVAL_SECONDS": 60,
     "RECENTLY_SEEN_THRESHOLD_SECONDS": 300,
     "STALE_THRESHOLD_DAYS": 30,
-    "ENABLE_DEX" : false,
+    "ENABLE_DEX": false,
     "ENABLE_DNS_SYNC": true,
-    "DNS_BASE_DOMAIN": "internal.ojii3.dev"
-  }
+    "DNS_BASE_DOMAIN": "internal.ojii3.dev",
+  },
 }
