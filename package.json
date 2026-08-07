@@ -10,7 +10,12 @@
     "deploy": "wrangler deploy",
     "dry-run": "wrangler deploy --dry-run",
     "test": "bun test",
-    "check": "bun run typecheck && bun run build && bun run dry-run",
+    "format": "oxfmt src public .github/workflows README.md package.json wrangler.jsonc tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts .oxfmtrc.json .oxlintrc.json",
+    "format:check": "oxfmt --check src public .github/workflows README.md package.json wrangler.jsonc tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts .oxfmtrc.json .oxlintrc.json",
+    "lint": "oxlint --deny-warnings src public vite.config.ts",
+    "lint:fix": "oxlint --fix src public vite.config.ts",
+    "svelte-check": "svelte-check --tsconfig ./tsconfig.app.json",
+    "check": "bun run format:check && bun run lint && bun run svelte-check && bun run typecheck && bun test && bun run build && bun run dry-run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -26,6 +31,8 @@
     "@tailwindcss/vite": "^4.3.0",
     "@tsconfig/svelte": "^5.0.8",
     "@types/node": "^24.13.3",
+    "oxfmt": "^0.62.0",
+    "oxlint": "^1.77.0",
     "svelte": "^5.56.8",
     "svelte-check": "^4.7.3",
     "tailwindcss": "^4.3.0",

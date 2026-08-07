@@ -15,7 +15,10 @@ export interface AccessVerificationResult {
 
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
-export async function verifyAccessJwt(request: Request, env: Env): Promise<AccessVerificationResult> {
+export async function verifyAccessJwt(
+  request: Request,
+  env: Env,
+): Promise<AccessVerificationResult> {
   const token = request.headers.get("Cf-Access-Jwt-Assertion");
   if (!token) return { viewer: null, reason: "missing_header" };
 
@@ -31,15 +34,15 @@ export async function verifyAccessJwt(request: Request, env: Env): Promise<Acces
   try {
     const { payload } = await jwtVerify(token, jwks, {
       issuer,
-      audience: env.CF_ACCESS_AUD
+      audience: env.CF_ACCESS_AUD,
     });
 
     return {
       viewer: {
         email: typeof payload.email === "string" ? payload.email : undefined,
         name: typeof payload.name === "string" ? payload.name : undefined,
-        sub: typeof payload.sub === "string" ? payload.sub : undefined
-      }
+        sub: typeof payload.sub === "string" ? payload.sub : undefined,
+      },
     };
   } catch (error) {
     console.error("access_jwt_verification_failed", serializeLogError(error));

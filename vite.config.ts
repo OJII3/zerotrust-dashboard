@@ -6,5 +6,5 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 export default defineConfig({
   plugins: [tailwindcss(), svelte()],
   root: "./src/client/",
-  build: { outDir: "../../dist" }
+  build: { outDir: "../../dist" },
 });

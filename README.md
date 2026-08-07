@@ -9,7 +9,7 @@ Tailscale-like devices dashboard for Cloudflare Zero Trust. Runs on Cloudflare W
 - Local IaC CLI: OpenTofu
 - Deployment runtime: Cloudflare Workers
 - API routing: Elysia.js
-- UI: static HTML/CSS/JS served by the Worker assets binding
+- UI: Svelte + Vite, built and served through the Worker assets binding
 
 ```sh
 nix develop
@@ -18,6 +18,10 @@ bun run dev
 ```
 
 This project intentionally standardizes on Bun for dependency installation and local scripts. Do not use npm or Node.js-specific project metadata as the primary workflow.
+
+### Code quality
+
+Run `bun run format` to apply Oxfmt formatting. Use `bun run format:check` to verify formatting without changing files, `bun run lint` for Oxlint correctness checks, and `bun run svelte-check` for Svelte diagnostics. `bun run check` runs `format:check`, `lint`, `svelte-check`, `typecheck`, tests, the build, and Wrangler dry-run.
 
 ## Configuration
 
@@ -68,6 +72,8 @@ A preceding step fails the run when any of these is unset, or when `CF_ACCESS_TE
 
 `CF_API_TOKEN` is the application runtime token used by the Worker when it calls the Cloudflare Zero Trust API. It is not a Wrangler authentication token. Wrangler authentication uses the `CLOUDFLARE_ACCESS_TOKEN` GitHub secret, mapped to Wrangler's expected `CLOUDFLARE_API_TOKEN` environment variable in CI.
 
+The separate `ci.yml` workflow runs `bun run check` for pull requests, pushes to `main`, and manual runs. It uses frozen Bun dependencies and does not require Cloudflare credentials or deploy the Worker. The existing deployment workflow runs the same check before deployment.
+
 ## Terraform
 
 Cloudflare Access is managed from `terraform/`. OpenTofu state is stored in Cloudflare R2 through the S3 backend.
@@ -114,6 +120,5 @@ Each run lists the zone's existing A records, filters to those under `.${DNS_BAS
 ## Verification
 
 ```sh
-bun run typecheck
-bun run dry-run
+bun run check
 ```

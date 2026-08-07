@@ -17,7 +17,11 @@ export function enabled(value?: string | boolean): boolean {
   return value === true || (typeof value === "string" && value.toLowerCase() === "true");
 }
 
-export function numberFromEnv(value: string | undefined, fallback: number, minimum: number): number {
+export function numberFromEnv(
+  value: string | undefined,
+  fallback: number,
+  minimum: number,
+): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(parsed, minimum);

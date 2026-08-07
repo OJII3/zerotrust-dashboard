@@ -1,5 +1,11 @@
 import { enabled, type Env } from "./env";
-import { createDnsRecord, deleteDnsRecord, fetchAllDnsRecords, serializeLogError, updateDnsRecord } from "./cloudflare-api";
+import {
+  createDnsRecord,
+  deleteDnsRecord,
+  fetchAllDnsRecords,
+  serializeLogError,
+  updateDnsRecord,
+} from "./cloudflare-api";
 import type { DashboardDevice } from "./devices";
 
 export const DEFAULT_DNS_BASE_DOMAIN = "internal.ojii3.dev";
@@ -22,7 +28,10 @@ export function slugifyLabel(input: string): string {
   return slug || "device";
 }
 
-export function computeHostnames(devices: DashboardDevice[], baseDomain: string): Map<string, DnsTarget> {
+export function computeHostnames(
+  devices: DashboardDevice[],
+  baseDomain: string,
+): Map<string, DnsTarget> {
   const targets = new Map<string, { device: DashboardDevice; ipv4: string }>();
   for (const device of devices) {
     const ipv4 = pickTargetIpv4(device);
@@ -55,12 +64,12 @@ export function computeHostnames(devices: DashboardDevice[], baseDomain: string)
 
 function pickTargetIpv4(device: DashboardDevice): string | undefined {
   const active = device.registrations.filter(
-    (registration) => registration.status === "active" && registration.virtualIpv4
+    (registration) => registration.status === "active" && registration.virtualIpv4,
   );
   if (!active.length) return undefined;
 
   const latest = [...active].sort(
-    (a, b) => Date.parse(b.lastSeenAt ?? "") - Date.parse(a.lastSeenAt ?? "")
+    (a, b) => Date.parse(b.lastSeenAt ?? "") - Date.parse(a.lastSeenAt ?? ""),
   )[0];
   return latest.virtualIpv4;
 }
@@ -82,7 +91,9 @@ export async function reconcileDns(env: Env, devices: DashboardDevice[]): Promis
 
   try {
     const existing = await fetchAllDnsRecords(env, zoneId, { type: "A" });
-    const managed = existing.filter((record) => record.name.toLowerCase().endsWith(`.${baseDomain.toLowerCase()}`));
+    const managed = existing.filter((record) =>
+      record.name.toLowerCase().endsWith(`.${baseDomain.toLowerCase()}`),
+    );
     const managedByName = new Map(managed.map((record) => [record.name.toLowerCase(), record]));
 
     let created = 0;
@@ -97,7 +108,13 @@ export async function reconcileDns(env: Env, devices: DashboardDevice[]): Promis
       const existingRecord = managedByName.get(key);
 
       if (!existingRecord) {
-        await createDnsRecord(env, zoneId, { type: "A", name: fqdn, content: ipv4, ttl: DNS_TTL_SECONDS, proxied: false });
+        await createDnsRecord(env, zoneId, {
+          type: "A",
+          name: fqdn,
+          content: ipv4,
+          ttl: DNS_TTL_SECONDS,
+          proxied: false,
+        });
         created += 1;
       } else if (existingRecord.content !== ipv4) {
         await updateDnsRecord(env, zoneId, existingRecord.id, { content: ipv4 });
