@@ -94,7 +94,8 @@ Create `.oxfmtrc.json` with exactly:
   "semi": true,
   "singleQuote": false,
   "trailingComma": "all",
-  "sortPackageJson": false
+  "sortPackageJson": false,
+  "svelte": true
 }
 ```
 

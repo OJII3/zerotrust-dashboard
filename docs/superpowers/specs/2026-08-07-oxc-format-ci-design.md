@@ -52,6 +52,7 @@ Add `.oxfmtrc.json` with the local Oxfmt schema and an explicit, stable style:
 - `semi`: true
 - `singleQuote`: false
 - `trailingComma`: `all`
+- `svelte`: true — explicit Svelte formatter enablement
 - Package JSON sorting disabled to keep package metadata changes intentional
 
 The formatter commands use the same target list:
